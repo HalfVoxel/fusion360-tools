@@ -5,7 +5,6 @@ It will export the files with names on the format componentName_bodyName_Nx.dxf 
 You will need to modify the output directory before using the script.
 """
 
-output_path = "/Users/arong/fusion/output"
 import adsk.core, adsk.fusion, adsk.cam, traceback
 import math
 
@@ -15,8 +14,21 @@ _app = adsk.core.Application.cast(None)
 def run(context):
     print("Running...")
     app = adsk.core.Application.get()
+    ui  = app.userInterface
 
+    # Set styles of file dialog.
+    folderDlg = ui.createFolderDialog()
+    folderDlg.title = 'Save flat bodies as DXFs' 
+    
+    dlgResult = folderDlg.showDialog()
+    if dlgResult == adsk.core.DialogResults.DialogOK:
+        msg = ""
+        output_path = folderDlg.folder
+    else:
+        return
+    
     des = adsk.fusion.Design.cast(app.activeProduct)
+    count = 0
     for comp in des.allComponents:
         for body in comp.bRepBodies:
             print(body.name)
@@ -32,7 +44,13 @@ def run(context):
                 continue
 
             sketch = comp.sketches.add(a)
+            count += 1
             sketch.saveAsDXF(output_path + "/" + str(comp.name) + "_" + body.name + "_" + str(len(des.rootComponent.allOccurrencesByComponent(comp))) + "x.dxf")
             sketch.deleteMe()
             #adsk.doEvents()
+        
+    
+    msg += f"Saved {count} flat bodies to {folderDlg.folder}"
+    ui.messageBox(msg)
+
     print("Done.")
